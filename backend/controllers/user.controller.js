@@ -23,8 +23,6 @@ const signUp = async (req, res) => {
             message: "User created successfully",
             user
         });
-
-
     } catch (error) {
         console.error("Error during sign up:", error.message); // Log error message
         res.status(500).json({ message: "Internal server error" }); // Send error response
@@ -32,6 +30,36 @@ const signUp = async (req, res) => {
 } 
 
 
+const login = async (req, res) => {
+    try {
+        let { email, password } = req.body; // Destructure request body
+
+        // Check if user exists
+        let existUser = await User.findOne({email}) // Find user by email
+        if (!existUser) {
+            return res.status(400).json({ message: "User does not exist" }); // Send error response
+        }                                   
+
+
+        // Compare password with hashed password        
+        let isMatch = await bcrypt.compare(password, existUser.password); // Compare passwords
+        if (!isMatch) {
+            return res.status(400).json({ message: "Invalid credentials" }); // Send error response
+        }
+        res.status(200).json({ 
+            message: "User signed in successfully",
+            user: existUser
+        }); 
+    }
+    catch (error) {
+        console.error("Error during sign in:", error.message); // Log error message
+        res.status(500).json({ message: "Internal server error" }); // Send error response
+    }
+}
+
+
+
 module.exports = {
-    signUp
+    signUp,
+    login  
 }

@@ -22,7 +22,7 @@ const db = async () => {
 db();
 
 app.get("/", (req, res) => {    
-    res.send("Hello World!"); 
+    res.send("This is home route"); 
 });
 
 const userRouter = require("./routes/user.route.js"); 
