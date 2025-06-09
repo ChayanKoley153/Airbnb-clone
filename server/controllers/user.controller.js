@@ -1,19 +1,19 @@
-const User = require('../models/User');
+const userModel = require('../models/user.model.js');
 const bcrypt = require('bcrypt');
 
 
-const signUp = async (req, res) => {
+const register = async (req, res) => {
     try {
         let { name, email, password } = req.body;
 
-        let existUser = await User.findOne({ email })
+        let existUser = await userModel.findOne({ email })
         if (existUser) {
             return res.status(400).json({ message: "User already exists" });
         }
 
         let hashPassword = await bcrypt.hash(password, 10);
 
-        let user = await User.create({
+        let user = await userModel.create({
             name,
             email,
             password: hashPassword,
@@ -33,7 +33,7 @@ const login = async (req, res) => {
     try {
         let { email, password } = req.body;
 
-        let existUser = await User.findOne({ email })
+        let existUser = await userModel.findOne({ email })
         if (!existUser) {
             return res.status(400).json({ message: "User does not exist" });
         }
@@ -57,6 +57,6 @@ const login = async (req, res) => {
 
 
 module.exports = {
-    signUp,
+    register,
     login
 }
