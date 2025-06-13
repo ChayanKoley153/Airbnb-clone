@@ -1,11 +1,13 @@
 const express = require('express');
-const userRouter = express.Router(); // Create a new router instance
+const userRouter = express.Router(); 
 
-const userController = require('../controllers/user.controller'); // Import signUp controller
+const userController = require('../controllers/user.controller'); 
 
-
-userRouter.post("/register", userController.register);
+userRouter.get("/all", userController.getAllUsers);
+userRouter.post("/signup", userController.register);
 userRouter.post("/login", userController.login); 
+userRouter.post("/update/:id", userController.updateUser);
+userRouter.post("/delete/:id", userController.deleteUser);
 
 module.exports = userRouter;
 

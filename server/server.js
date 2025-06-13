@@ -22,8 +22,14 @@ app.get("/", (req, res) => {
 });
 
 const userRouter = require("./routes/user.route.js"); 
-app.use("/api/user", userRouter); 
+const adminRouter = require("./routes/admin.routes.js");
+const movieRouter = require("./routes/movie.routes.js");
+const bookingRouter = require("./routes/booking.routes.js");
 
+app.use("/api/user", userRouter); 
+app.use("/api/admin", adminRouter); 
+app.use("/api/movie", movieRouter);
+app.use("/api/booking", bookingRouter);
 
 
 

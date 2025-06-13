@@ -1,62 +1,131 @@
-const userModel = require('../models/user.model.js');
+const userModel = require('../models/User.js');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const env =  require('dotenv').config();
 
+// Get all users
+const getAllUsers = async (req, res) => {
+    try {
+        const users = await userModel.find();
+        if (!users || users.length === 0) {
+            return res.status(404).json({ message: "No users found" });
+        }
+        return res.status(200).json({ users });
+    } catch (error) {
+        console.log(error.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
 
+// Register user
 const register = async (req, res) => {
     try {
-        let { name, email, password } = req.body;
+        const { name, email, password } = req.body;
 
-        let existUser = await userModel.findOne({ email })
-        if (existUser) {
+        const existingUser = await userModel.findOne({ email });
+        if (existingUser) {
             return res.status(400).json({ message: "User already exists" });
         }
 
-        let hashPassword = await bcrypt.hash(password, 10);
+        const hashPassword = await bcrypt.hash(password, 10);
 
-        let user = await userModel.create({
+        const newUser = await userModel.create({
             name,
             email,
             password: hashPassword,
-        })
-        res.status(201).json({
+        });
+
+        return res.status(201).json({
             message: "User created successfully",
-            user
+            newUser,
         });
     } catch (error) {
-        console.error("Error during sign up:", error.message);
-        res.status(500).json({ message: "Internal server error" });
+        console.error(error.message);
+        return res.status(500).json({ message: "Internal server error" });
     }
-}
+};
 
-
+// Login user
 const login = async (req, res) => {
     try {
-        let { email, password } = req.body;
+        const { email, password } = req.body;
 
-        let existUser = await userModel.findOne({ email })
-        if (!existUser) {
-            return res.status(400).json({ message: "User does not exist" });
+        const existingUser = await userModel.findOne({ email });
+        if (!existingUser) {
+            return res.status(404).json({ message: "User does not exist" });
         }
 
-
-        let isMatch = await bcrypt.compare(password, existUser.password);
+        const isMatch = await bcrypt.compare(password, existingUser.password);
         if (!isMatch) {
-            return res.status(400).json({ message: "Invalid credentials" });
+            return res.status(400).json({ message: "Invalid email or password" });
         }
-        res.status(200).json({
+
+        const token = jwt.sign({ id: existingUser._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+        return res.status(200).json({
             message: "User signed in successfully",
-            user: existUser
+            user: existingUser,
+            token,
         });
-    }
-    catch (error) {
+    } catch (error) {
         console.error("Error during sign in:", error.message);
-        res.status(500).json({ message: "Internal server error" });
+        return res.status(500).json({ message: "Internal server error" });
     }
-}
+};
 
+// Update user
+const updateUser = async (req, res) => {
+    const { id } = req.params;
+    const { name, email, password } = req.body;
 
+    try {
+        let updateData = { name, email };
+        if (password) {
+            updateData.password = await bcrypt.hash(password, 10);
+        }
+
+        const updatedUser = await userModel.findByIdAndUpdate(
+            id,
+            { $set: updateData },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        return res.status(200).json({
+            message: "User updated successfully",
+            user: updatedUser,
+        });
+    } catch (error) {
+        console.error(error.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+// Delete user
+const deleteUser = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const user = await userModel.findByIdAndDelete(id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        return res.status(200).json({
+            message: "User deleted successfully",
+            user,
+        });
+    } catch (error) {
+        console.error(error.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
 
 module.exports = {
     register,
-    login
-}
+    login,
+    getAllUsers,
+    updateUser,
+    deleteUser
+};
